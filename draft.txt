@@ -1,0 +1,690 @@
+import React, { useState, useEffect } from 'react';
+import { Search, Trash, Edit, Plus, X, Check } from 'lucide-react';
+
+// Mock data structures (based on API response format)
+const initialEmployees = [];
+
+const jobOptions = [
+  { id: 1, title: 'Software Engineer' },
+  { id: 2, title: 'Product Manager' },
+  { id: 3, title: 'UI/UX Designer' },
+  { id: 4, title: 'Data Analyst' },
+];
+
+const currencyOptions = ['USD', 'EUR', 'GBP', 'NGN', 'CAD'];
+const statusOptions = ['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED'];
+
+const EmployeeManagement = () => {
+  const [employees, setEmployees] = useState(initialEmployees);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [notification, setNotification] = useState({ show: false, message: '', isError: false });
+
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    salary: '',
+    currency: 'USD',
+    employeeStatus: 'ACTIVE',
+    jobId: ''
+  });
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/employees/all');
+      const data = await response.json();
+      
+      if (!data.error) {
+        setEmployees(data.data || []);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError('Failed to fetch employees');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchEmployeeById = async (id) => {
+    try {
+      const response = await fetch(`/api/employees/${id}`);
+      const data = await response.json();
+      
+      if (!data.error) {
+        return data.data;
+      } else {
+        showNotification(data.message, true);
+        return null;
+      }
+    } catch (err) {
+      showNotification('Failed to fetch employee details', true);
+      return null;
+    }
+  };
+
+  const fetchEmployeeByEmail = async (email) => {
+    try {
+      const response = await fetch(`/api/employees/by-email/${email}`);
+      const data = await response.json();
+      
+      if (!data.error) {
+        return data.data;
+      } else {
+        showNotification(data.message, true);
+        return null;
+      }
+    } catch (err) {
+      showNotification('Failed to fetch employee details', true);
+      return null;
+    }
+  };
+
+  const createEmployee = async () => {
+    try {
+      const response = await fetch(`/api/employees/create-employee/jobId/${formData.jobId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          salary: parseFloat(formData.salary),
+          currency: formData.currency,
+          employeeStatus: formData.employeeStatus
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.error) {
+        showNotification('Employee created successfully');
+        setShowCreateModal(false);
+        resetForm();
+        fetchEmployees();
+      } else {
+        showNotification(data.message, true);
+      }
+    } catch (err) {
+      showNotification('Failed to create employee', true);
+    }
+  };
+
+  const updateEmployee = async () => {
+    try {
+      const response = await fetch(`/api/employees/update/employeeId/${selectedEmployee.id}/newJobId/${formData.jobId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          salary: parseFloat(formData.salary),
+          currency: formData.currency,
+          employeeStatus: formData.employeeStatus
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.error) {
+        showNotification('Employee updated successfully');
+        setShowEditModal(false);
+        resetForm();
+        fetchEmployees();
+      } else {
+        showNotification(data.message, true);
+      }
+    } catch (err) {
+      showNotification('Failed to update employee', true);
+    }
+  };
+
+  const deleteEmployee = async () => {
+    try {
+      const response = await fetch(`/api/employees/delete/${selectedEmployee.id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (!data.error) {
+        showNotification('Employee deleted successfully');
+        setShowDeleteModal(false);
+        fetchEmployees();
+      } else {
+        showNotification(data.message, true);
+      }
+    } catch (err) {
+      showNotification('Failed to delete employee', true);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      salary: '',
+      currency: 'USD',
+      employeeStatus: 'ACTIVE',
+      jobId: ''
+    });
+  };
+
+  const openEditModal = async (employee) => {
+    const fullEmployee = await fetchEmployeeById(employee.id);
+    
+    if (fullEmployee) {
+      setSelectedEmployee(fullEmployee);
+      setFormData({
+        firstName: fullEmployee.firstName,
+        lastName: fullEmployee.lastName,
+        email: fullEmployee.email,
+        phone: fullEmployee.phone,
+        salary: fullEmployee.salary.toString(),
+        currency: fullEmployee.currency,
+        employeeStatus: fullEmployee.employeeStatus,
+        jobId: fullEmployee.jobs && fullEmployee.jobs.length > 0 ? fullEmployee.jobs[0].id : ''
+      });
+      setShowEditModal(true);
+    }
+  };
+
+  const openDeleteModal = (employee) => {
+    setSelectedEmployee(employee);
+    setShowDeleteModal(true);
+  };
+
+  const showNotification = (message, isError = false) => {
+    setNotification({ show: true, message, isError });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', isError: false });
+    }, 3000);
+  };
+
+  const filteredEmployees = employees.filter(employee => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      employee.firstName?.toLowerCase().includes(searchLower) ||
+      employee.lastName?.toLowerCase().includes(searchLower) ||
+      employee.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // If loading, display loading message
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-700">Loading employees...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If error, display error message
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
+          <h2 className="text-red-600 text-xl font-bold mb-4">Error</h2>
+          <p className="text-gray-700">{error}</p>
+          <button 
+            onClick={() => fetchEmployees()}
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-100 min-h-screen">
+      {/* Notification */}
+      {notification.show && (
+        <div className={`fixed top-4 right-4 px-4 py-2 rounded-md shadow-md ${notification.isError ? 'bg-red-500' : 'bg-green-500'} text-white`}>
+          {notification.message}
+        </div>
+      )}
+      
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">Employee Management</h1>
+            <button 
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Add Employee
+            </button>
+          </div>
+        </div>
+      </header>
+      
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={18} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search employees..."
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
+        </div>
+        
+        {/* Employee Table */}
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredEmployees.length > 0 ? (
+                filteredEmployees.map((employee) => (
+                  <tr key={employee.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
+                          {employee.firstName?.charAt(0)}{employee.lastName?.charAt(0)}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{employee.firstName} {employee.lastName}</div>
+                          <div className="text-sm text-gray-500">{employee.phone}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {employee.jobs && employee.jobs.length > 0 ? employee.jobs.map(job => job.title).join(', ') : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${employee.employeeStatus === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                          employee.employeeStatus === 'ON_LEAVE' ? 'bg-yellow-100 text-yellow-800' :
+                          employee.employeeStatus === 'TERMINATED' ? 'bg-red-100 text-red-800' : 
+                          'bg-gray-100 text-gray-800'}`}
+                      >
+                        {employee.employeeStatus}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {employee.currency} {Number(employee.salary).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => openEditModal(employee)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button 
+                          onClick={() => openDeleteModal(employee)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                    No employees found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
+      
+      {/* Create Employee Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full">
+            <div className="border-b px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg font-medium">Add New Employee</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-500">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                  <input
+                    type="number"
+                    name="salary"
+                    value={formData.salary}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                  <select
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {currencyOptions.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Job</label>
+                  <select
+                    name="jobId"
+                    value={formData.jobId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a job</option>
+                    {jobOptions.map((job) => (
+                      <option key={job.id} value={job.id}>
+                        {job.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    name="employeeStatus"
+                    value={formData.employeeStatus}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createEmployee}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Create Employee
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Edit Employee Modal */}
+      {showEditModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full">
+            <div className="border-b px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg font-medium">Edit Employee</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-500">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                  <input
+                    type="number"
+                    name="salary"
+                    value={formData.salary}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                  <select
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {currencyOptions.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Job</label>
+                  <select
+                    name="jobId"
+                    value={formData.jobId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a job</option>
+                    {jobOptions.map((job) => (
+                      <option key={job.id} value={job.id}>
+                        {job.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    name="employeeStatus"
+                    value={formData.employeeStatus}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={updateEmployee}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Update Employee
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+            <div className="border-b px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg font-medium">Confirm Deletion</h3>
+              <button onClick={() => setShowDeleteModal(false)} className="text-gray-400 hover:text-gray-500">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700">
+                Are you sure you want to delete {selectedEmployee.firstName} {selectedEmployee.lastName}? This action cannot be undone.
+              </p>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={deleteEmployee}
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EmployeeManagement;
