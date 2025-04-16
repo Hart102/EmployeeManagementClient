@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Trash2, Shield, Loader2 } from 'lucide-react';
+import ResetPassword from '../../components/ResetPassword';
 
 
 
@@ -9,49 +10,18 @@ const AccountSettings = () => {
   const [loading, setLoading] = useState(false)
 
 
-
   const handleDelete = () => {
     setLoading(true)
     console.log("delete")
   }
 
+
+
   return (
     <>
       <div className="space-y-5">
-        <div className="bg-white rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Account Settings</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Manage your organization account.</p>
-          </div>
-          <div className="border-t border-gray-100">
-            <dl>
-              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Organization name</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex justify-between">
-                  <span>{organization?.name}</span>
-                  <button
-                    // onClick={() => setIsEditing(true)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Edit
-                  </button>
-                </dd>
-              </div>
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Email address</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex justify-between">
-                  <span>{organization?.email}</span>
-                  <button
-                    // onClick={() => setIsEditing(true)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Edit
-                  </button>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
+        {/* RESET PASSWORD */}
+        <ResetPassword />
 
         <div className="bg-white rounded-lg">
           <div className="px-4 py-5 sm:px-6">
@@ -85,6 +55,8 @@ const AccountSettings = () => {
           </div>
         </div>
       </div>
+
+     
 
       {confirmDelete && (
         <div className="fixed inset-0 bg-gray-400/50 bg-opacity-501 flex items-center justify-center p-4 z-50">

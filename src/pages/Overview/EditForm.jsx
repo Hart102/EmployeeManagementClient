@@ -1,49 +1,31 @@
 import React, { useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useForm } from 'react-hook-form';
+import { yupResolver } from "@hookform/resolvers/yup";
+import { updateOrganization } from "../../schema/OrganizationSchema"
 
 
 const EditForm = () => {
-    const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({
-        name: '',
-        email: ''
-    });
+    const [loading, setLoading] = useState(false);
 
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm({ resolver: yupResolver(updateOrganization) })
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target; Users, Building, Briefcase, CreditCard
-        setFormData({ ...formData, [name]: value });
-    };
-
-    const handleUpdate = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (data) => {
+        console.log(data);
         setLoading(true);
-
-        try {
-            // This would be your actual API call
-            setTimeout(() => {
-                setOrganization({
-                    ...organization,
-                    name: formData.name,
-                    email: formData.email
-                });
-                setIsEditing(false);
-                setSuccess('Organization details updated successfully!');
-                setTimeout(() => setSuccess(null), 3000);
-                setLoading(false);
-            }, 800);
-        } catch (err) {
-            setError('Failed to update organization details.');
-            setLoading(false);
-        }
-    };
+    }
 
     const inputClass = "mt-1 p-4 focus:outline-blue-500 bg-gray-100 block w-full shadow-sm1 sm:text-sm rounded-md";
 
 
     return (
         <div className="border-t border-gray-100 px-4 py-5 sm:px-6">
-            <form onSubmit={handleUpdate} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4 [&_small]:text-red-500 [&_small]:italic">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                         Organization Name
@@ -51,12 +33,11 @@ const EditForm = () => {
                     <input
                         type="text"
                         name="name"
-                        id="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
                         className={inputClass}
+                        {...register("name")}
                     />
                 </div>
+                {errors.name && <small>{errors.name.message}</small>}
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                         Email Address
@@ -64,12 +45,11 @@ const EditForm = () => {
                     <input
                         type="email"
                         name="email"
-                        id="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
                         className={inputClass}
+                        {...register("email")}
                     />
                 </div>
+                {errors.email && <small>{errors.email.message}</small>}
                 <div className="flex justify-end">
                     <button
                         type="submit"
