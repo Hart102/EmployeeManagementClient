@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import { Link } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
+import axios from 'axios';
 import { EyeIcon, EyeOffIcon, Lock, Mail, RefreshCw } from "lucide-react";
 import { useForm } from 'react-hook-form';
 import { loginSchema } from "../../schema/OrganizationSchema";
+import { api } from "../../Api/index";
+
 
 
 const Login = () => {
@@ -19,7 +22,44 @@ const Login = () => {
 
     const onSubmit = async (data) => {
         setLoading(true);
-        console.log(data);
+
+        try {
+            const response = await axios.post(`${api}/auth/login`, data);
+
+            console.log(response.data.data);
+            setLoading(false);
+
+            // SET COOKIE FUNCTION
+            const setCookie = (options) => {
+                let expires = "";
+                if (options.days) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + options.days * 24 * 60 * 60 * 1000);
+                    expires = "; expires=" + date.toUTCString();
+                }
+                const value = encodeURIComponent(JSON.stringify(options.value));
+                document.cookie = `${options.name}=${value}${expires}; path=/`;
+            };
+
+            setCookie({
+                name: "EmployeeData",
+                value: {
+                    id: response.data.data.id,
+                    name: response.data.data.name,
+                    email: response.data.data.email,
+                    access_token: response.data.data.access_token,
+                },
+                days: 7,
+            });
+            window.location.href = "/";
+
+        } catch (error) {
+            setLoading(false);
+            // setMessage(error.response.data.message);
+            console.log(error.response.data.message);
+        }
+
+        // console.log(data);
     }
 
     const inputClass = "mt-1 pl-10 block w-full focus:outline-blue-500 bg-gray-100 block sm:text-sm py-3 px-3"

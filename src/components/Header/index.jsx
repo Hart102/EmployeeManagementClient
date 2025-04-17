@@ -1,11 +1,19 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, X, Menu } from 'lucide-react';
 import { links } from '../../constants';
+import { currentUser } from '../utils';
 
-const Header = ({ organizationName, organizationEmail }) => {
+const Header = () => {
+    const navigation = useNavigate();
     const currentTab = useLocation().pathname;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [organization] = useState(currentUser);
+
+    
+    useEffect(() => {
+        if (organization == null) return navigation('/login');
+    }, [organization]);
 
 
     return (
@@ -14,7 +22,6 @@ const Header = ({ organizationName, organizationEmail }) => {
                 <div className="flex justify-between h-16">
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
-                            {/* <Building className="h-8 w-8 text-blue-600" /> */}
                             <span className="ml-2 text-xl font-bold text-gray-800">OrgManager</span>
                         </div>
                         <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -36,10 +43,10 @@ const Header = ({ organizationName, organizationEmail }) => {
                         </button>
                         <div className="ml-3 relative">
                             <div className="flex items-center">
-                                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                                    {organizationName?.charAt(0) || 'A'}
+                                <div className="capitalize h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                    {organization?.name?.charAt(0) || 'A'}
                                 </div>
-                                <span className="ml-2 text-sm font-medium text-gray-700 hidden md:block">{organizationName || 'Loading...'}</span>
+                                <span className="ml-2 text-sm font-medium text-gray-700 hidden first-letter:capitalize md:block">{organization?.name || 'Loading...'}</span>
                                 <ChevronDown className="ml-1 h-4 w-4 text-gray-400" />
                             </div>
                         </div>
@@ -72,12 +79,12 @@ const Header = ({ organizationName, organizationEmail }) => {
                         <div className="flex items-center px-4">
                             <div className="flex-shrink-0">
                                 <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                                    {organizationName?.charAt(0) || 'A'}
+                                    {organization?.name?.charAt(0) || 'A'}
                                 </div>
                             </div>
                             <div className="ml-3">
-                                <div className="text-base font-medium text-gray-800">{organizationName || 'Loading...'}</div>
-                                <div className="text-sm font-medium text-gray-500">{organizationEmail || ''}</div>
+                                <div className="text-base font-medium text-gray-800">{organization?.name || 'Loading...'}</div>
+                                <div className="text-sm font-medium text-gray-500">{organization?.email || ''}</div>
                             </div>
                         </div>
                         <div className="mt-3 space-y-1">
