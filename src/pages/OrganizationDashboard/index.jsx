@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 import Header from '../../components/Header';
-import PageHeader from '../../components/PageHeader';
+import PageTitle from '../../components/PageTitle';
 import Overview from '../../components/Overview';
 
 const OrganizationDashboard = () => {
@@ -115,7 +115,7 @@ const OrganizationDashboard = () => {
           )}
 
           {/* Page header */}
-          <PageHeader currentTab={activeTab} />
+          <PageTitle currentTab={activeTab} />
 
 
           {/* Dashboard content based on active tab */}

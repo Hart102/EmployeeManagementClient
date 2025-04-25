@@ -11,8 +11,17 @@ const AccountSettings = () => {
 
 
   const handleDelete = () => {
-    setLoading(true)
-    console.log("delete")
+    console.log("something")
+    // try {
+
+    // } catch (error) {
+    //   setLoading(false);
+    //   setMessage(error.response.data.message);
+    //   setTimeout(() => {
+    //     setMessage("");
+    //   }, 5000)
+    // }
+
   }
 
 
@@ -56,7 +65,7 @@ const AccountSettings = () => {
         </div>
       </div>
 
-     
+
 
       {confirmDelete && (
         <div className="fixed inset-0 bg-gray-400/50 bg-opacity-501 flex items-center justify-center p-4 z-50">

@@ -25,8 +25,6 @@ const Login = () => {
 
         try {
             const response = await axios.post(`${api}/auth/login`, data);
-
-            console.log(response.data.data);
             setLoading(false);
 
             // SET COOKIE FUNCTION
@@ -55,11 +53,11 @@ const Login = () => {
 
         } catch (error) {
             setLoading(false);
-            // setMessage(error.response.data.message);
-            console.log(error.response.data.message);
+            setMessage(error.response.data.message);
+            setTimeout(() => {
+                setMessage("");
+            }, 5000)
         }
-
-        // console.log(data);
     }
 
     const inputClass = "mt-1 pl-10 block w-full focus:outline-blue-500 bg-gray-100 block sm:text-sm py-3 px-3"
@@ -145,6 +143,9 @@ const Login = () => {
                             <>Sign in</>
                         )}
                     </button>
+                    <div className='text-center mt-2'>
+                        <p className='text-red-500 font-medium'>{message}</p>
+                    </div>
                 </div>
 
                 <div className="text-center">

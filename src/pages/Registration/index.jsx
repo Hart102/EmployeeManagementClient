@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon, Lock, Mail, User, RefreshCw } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { registrationSchama } from "../../schema/OrganizationSchema"
+import { api } from "../../Api/index"
+import axios from "axios";
 
 const Register = () => {
+    const navigation = useNavigate()
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState();
     const [showPassword, setShowPassword] = useState(false);
@@ -17,22 +20,31 @@ const Register = () => {
     } = useForm({ resolver: yupResolver(registrationSchama) })
 
     const onSubmit = async (data) => {
-        console.log(data);
         setLoading(true);
-        // "/api/auth/register"
+        try {
+            const request = await axios.post(`${api}/auth/register`, data)
+            const response = request.data.data
+            setLoading(false);
+
+            if (!response.isError) navigation("/login")
+
+        } catch (error) {
+            setLoading(false);
+            setMessage(error.response.data.message);
+            setTimeout(() => {
+                setMessage("");
+            },5000)
+        }
     }
 
 
-
-
-
-    const inputClass = "mt-1 pl-10 block w-full focus:outline-blue-500 bg-gray-50 block sm:text-sm py-3 px-3"
+    const inputClass = "mt-1 pl-10 block w-full focus:outline-blue-500 bg-gray-100 block sm:text-sm py-3 px-3"
 
     return (
 
-        <div className="bg-gray-50 flex items-center justify-center h-screen">
+        <div className="bg-gray-50 flex items-center justify-center h-screen px-4">
             <form onSubmit={handleSubmit(onSubmit)}
-                className="bg-white p-8 rounded-md w-full md:w-1/2 lg:w-1/4 space-y-5 [&_small]:text-red-500 [&_small]:italic">
+                className="bg-white1 rounded-md w-full lg:w-3/12 space-y-5 [&_small]:text-red-500 [&_small]:italic">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                         Organization Name
@@ -137,6 +149,9 @@ const Register = () => {
                             <>Register</>
                         )}
                     </button>
+                    <div className='text-center mt-2'>
+                        <p className='text-red-500 font-medium'>{message}</p>
+                    </div>
                 </div>
 
                 <div className="text-center">
